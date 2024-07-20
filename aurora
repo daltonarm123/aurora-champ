@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cmath>
 
 class Ability {
 public:
@@ -16,6 +17,19 @@ public:
     }
 };
 
+class Enemy {
+public:
+    std::string name;
+    int x, y;
+
+    Enemy(std::string n, int posX, int posY) : name(n), x(posX), y(posY) {}
+
+    void move(int newX, int newY) {
+        x = newX;
+        y = newY;
+    }
+};
+
 class Champion {
 public:
     std::string name;
@@ -23,8 +37,9 @@ public:
     int mana;
     int attackDamage;
     std::vector<Ability> abilities;
+    int posX, posY;
 
-    Champion(std::string n, int h, int m, int ad) : name(n), health(h), mana(m), attackDamage(ad) {}
+    Champion(std::string n, int h, int m, int ad, int x, int y) : name(n), health(h), mana(m), attackDamage(ad), posX(x), posY(y) {}
 
     void addAbility(Ability ability) {
         abilities.push_back(ability);
@@ -41,11 +56,20 @@ public:
         }
     }
 
-    void useAbility(int index) {
+    void useAbility(int index, std::vector<Enemy>& enemies) {
         if (index >= 0 && index < abilities.size()) {
             if (mana >= abilities[index].manaCost) {
                 mana -= abilities[index].manaCost;
-                abilities[index].useAbility();
+                Ability& ability = abilities[index];
+                ability.useAbility();
+
+                // Predict and hit the nearest enemy
+                Enemy* target = predictTarget(enemies);
+                if (target) {
+                    std::cout << ability.name << " hits " << target->name << " at position (" << target->x << ", " << target->y << ")" << std::endl;
+                } else {
+                    std::cout << ability.name << " missed all targets." << std::endl;
+                }
             } else {
                 std::cout << "Not enough mana to use " << abilities[index].name << std::endl;
             }
@@ -53,25 +77,47 @@ public:
             std::cout << "Invalid ability index" << std::endl;
         }
     }
+
+private:
+    Enemy* predictTarget(std::vector<Enemy>& enemies) {
+        if (enemies.empty()) return nullptr;
+        Enemy* closestEnemy = &enemies[0];
+        double closestDistance = calculateDistance(posX, posY, enemies[0].x, enemies[0].y);
+
+        for (auto& enemy : enemies) {
+            double distance = calculateDistance(posX, posY, enemy.x, enemy.y);
+            if (distance < closestDistance) {
+                closestEnemy = &enemy;
+                closestDistance = distance;
+            }
+        }
+        return closestEnemy;
+    }
+
+    double calculateDistance(int x1, int y1, int x2, int y2) {
+        return std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2));
+    }
 };
 
 int main() {
-    Champion aurora("Aurora", 1000, 500, 75);
+    Champion aurora("Aurora", 1000, 500, 75, 0, 0);
 
     Ability ability1("Frost Bolt", 50, 5, "Deals magic damage and slows the enemy.");
     Ability ability2("Ice Shield", 40, 10, "Grants a shield that absorbs damage.");
     Ability ability3("Blizzard", 100, 20, "Deals AoE magic damage over time.");
-    
+
     aurora.addAbility(ability1);
     aurora.addAbility(ability2);
     aurora.addAbility(ability3);
 
     aurora.showInfo();
 
+    std::vector<Enemy> enemies = {Enemy("Goblin", 5, 5), Enemy("Orc", 10, 10), Enemy("Dragon", 20, 20)};
+
     std::cout << "\nUsing abilities:\n";
-    aurora.useAbility(0);
-    aurora.useAbility(1);
-    aurora.useAbility(2);
+    aurora.useAbility(0, enemies);
+    aurora.useAbility(1, enemies);
+    aurora.useAbility(2, enemies);
 
     return 0;
 }

@@ -1,0 +1,77 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+class Ability {
+public:
+    std::string name;
+    int manaCost;
+    int cooldown;
+    std::string description;
+
+    Ability(std::string n, int m, int c, std::string d) : name(n), manaCost(m), cooldown(c), description(d) {}
+
+    void useAbility() {
+        std::cout << "Using ability: " << name << " - " << description << std::endl;
+    }
+};
+
+class Champion {
+public:
+    std::string name;
+    int health;
+    int mana;
+    int attackDamage;
+    std::vector<Ability> abilities;
+
+    Champion(std::string n, int h, int m, int ad) : name(n), health(h), mana(m), attackDamage(ad) {}
+
+    void addAbility(Ability ability) {
+        abilities.push_back(ability);
+    }
+
+    void showInfo() {
+        std::cout << "Champion: " << name << std::endl;
+        std::cout << "Health: " << health << std::endl;
+        std::cout << "Mana: " << mana << std::endl;
+        std::cout << "Attack Damage: " << attackDamage << std::endl;
+        std::cout << "Abilities: " << std::endl;
+        for (const auto& ability : abilities) {
+            std::cout << "  - " << ability.name << ": " << ability.description << " (Mana Cost: " << ability.manaCost << ", Cooldown: " << ability.cooldown << "s)" << std::endl;
+        }
+    }
+
+    void useAbility(int index) {
+        if (index >= 0 && index < abilities.size()) {
+            if (mana >= abilities[index].manaCost) {
+                mana -= abilities[index].manaCost;
+                abilities[index].useAbility();
+            } else {
+                std::cout << "Not enough mana to use " << abilities[index].name << std::endl;
+            }
+        } else {
+            std::cout << "Invalid ability index" << std::endl;
+        }
+    }
+};
+
+int main() {
+    Champion aurora("Aurora", 1000, 500, 75);
+
+    Ability ability1("Frost Bolt", 50, 5, "Deals magic damage and slows the enemy.");
+    Ability ability2("Ice Shield", 40, 10, "Grants a shield that absorbs damage.");
+    Ability ability3("Blizzard", 100, 20, "Deals AoE magic damage over time.");
+    
+    aurora.addAbility(ability1);
+    aurora.addAbility(ability2);
+    aurora.addAbility(ability3);
+
+    aurora.showInfo();
+
+    std::cout << "\nUsing abilities:\n";
+    aurora.useAbility(0);
+    aurora.useAbility(1);
+    aurora.useAbility(2);
+
+    return 0;
+}
